@@ -10,11 +10,11 @@ import VectorSource from 'ol/source/Vector';
 import { Style, Stroke, Icon } from 'ol/style';
 import {useGeographic} from 'ol/proj.js';
 import Overlay from 'ol/Overlay.js';
-
 import axios from 'axios';
 
 useGeographic();
 
+// Инициализация тултипа
 const toolTipElement = document.createElement('div');
 toolTipElement.className = 'tooltip';
 document.body.appendChild(toolTipElement);
@@ -28,12 +28,20 @@ var featurePoint;
 function showRoad(road_code) {
   axios.get(`http://127.0.0.1:8000/api/v1/road/${road_code}/`).then(function (response) {
     var data = response.data;
-    // console.log(road_code)
+
     const inputString = data[0].coordinates;
     const trimmedString = inputString.slice(1, -1);
     const coordinatesArray = JSON.parse("[" + trimmedString + "]")
-    let coordinatesPointsArray;
+    
+    // Анимация перехода с одной дороги на другую
+    const avgCorArray = avgCoordinates(coordinatesArray)
+    view.animate({
+      center: avgCorArray,
+      duration: 2000,
+      zoom: 13
+    });
 
+    let coordinatesPointsArray;
     getazs(road_code).then(result => {
       coordinatesPointsArray = result
     })
@@ -58,8 +66,6 @@ function showRoad(road_code) {
       })
     });
 
-
-    var road_code_local = road_code
     if (vectorLayer) {
       map.removeLayer(vectorLayer)
     }
@@ -70,9 +76,19 @@ function showRoad(road_code) {
       }),
     });
 
+    if (tooltip) {
+      map.removeOverlay(tooltip)
+    }
+
+    tooltip = new Overlay({
+      element: toolTipElement,
+      offset: [0, 50],
+      positioning: 'bottom-center',
+    });
+
+    // Событие на наводку дороги (показ тултипа)
     map.on('pointermove', (event) => {
       const features = map.getFeaturesAtPixel(event.pixel);
-      
 
       if (features.length > 0) {
 
@@ -88,7 +104,8 @@ function showRoad(road_code) {
         toolTipElement.style.display = 'none'
       }
     });
-
+    
+    // Событие на нажатие дороги
     map.on('click', (event) => {
       const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature);
       
@@ -123,16 +140,6 @@ function showRoad(road_code) {
       }
     })
     
-    if (tooltip) {
-      map.removeOverlay(tooltip)
-    }
-
-    tooltip = new Overlay({
-      element: toolTipElement,
-      offset: [0, 50],
-      positioning: 'bottom-center',
-    });
-
     map.addOverlay(tooltip);
     map.addLayer(vectorLayer);
   })
@@ -165,22 +172,14 @@ function allroads() {
       button.textContent = element.name;
       button.setAttribute('id', `button-${element.road_code}`);
       button.addEventListener('click', () => {
-
         showRoad(element.road_code);
-        
-        view.animate({
-          center: [43.8198579971354,43.5979421994245],
-          duration: 2000,
-          zoom: 13
-        });
       });
       sidebar.appendChild(button);
-
     });
   })
 }
 
-
+// Функция получения JSON от АЗС таблицы 
 async function getazs(road_code) {
   try {
     const response = await axios.get(`http://127.0.0.1:8000/api/v1/azs-for/${road_code}/`)
@@ -199,6 +198,26 @@ async function getazs(road_code) {
   } catch (error) {
     console.log("F?", error)
   }
+}
+
+// Фукция средней координаты
+function avgCoordinates(coordinatesArray) {
+  if (coordinatesArray.length === 0) {
+  return null;
+  }
+  
+  let sumX = 0;
+  let sumY = 0;
+  
+  coordinatesArray.forEach(coordinate => {
+    sumX += coordinate[0];
+    sumY += coordinate[1];
+  });
+  
+  const avgX = sumX / coordinatesArray.length;
+  const avgY = sumY / coordinatesArray.length;
+  
+  return [avgX, avgY];
 }
 
 allroads();
