@@ -3,3 +3,7 @@ GET http://127.0.0.1:8000/api/v1/allroads/
 ###
 
 GET http://127.0.0.1:8000/api/v1/road/10111/
+
+###
+
+GET http://127.0.0.1:8000/api/v1/azs-for/10111/
