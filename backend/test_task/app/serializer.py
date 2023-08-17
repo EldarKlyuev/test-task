@@ -9,5 +9,5 @@ class TblAzsSerializer(serializers.ModelSerializer):
 
 class TblRoadsSerializer(serializers.ModelSerializer):
     class Meta:
-        models = TblRoads
-        fields = ('road_code', 'name', 'length_km', 'geomtype', 'coordinates')
+        model = TblRoads
+        fields = "__all__"
