@@ -7,9 +7,10 @@ import Point from 'ol/geom/Point.js';
 import LineString from 'ol/geom/LineString.js';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import { Style, Stroke } from 'ol/style';
+import { Style, Stroke, Icon } from 'ol/style';
 import {useGeographic} from 'ol/proj.js';
 import Overlay from 'ol/Overlay.js';
+
 import axios from 'axios';
 
 useGeographic();
@@ -23,15 +24,19 @@ var vectorLayer;
 var vectorPointLayer;
 var vectorPointSource;
 var featurePoint;
-// var road_code;
 
 function showRoad(road_code) {
   axios.get(`http://127.0.0.1:8000/api/v1/road/${road_code}/`).then(function (response) {
     var data = response.data;
-    console.log(road_code)
+    // console.log(road_code)
     const inputString = data[0].coordinates;
     const trimmedString = inputString.slice(1, -1);
     const coordinatesArray = JSON.parse("[" + trimmedString + "]")
+    let coordinatesPointsArray;
+
+    getazs(road_code).then(result => {
+      coordinatesPointsArray = result
+    })
 
     const lineString = new LineString(coordinatesArray);
 
@@ -84,15 +89,39 @@ function showRoad(road_code) {
       }
     });
 
-    // map.on('click', (event) => {
-    //   const feature = map.getFeaturesAtPixel(event.pixel, (feature) => feature);
-
-    //   if (feature) {
-    //     map.removeLayer(vectorPointLayer);
-    //     getazs(road_code_local);
-    //   }
+    map.on('click', (event) => {
+      const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature);
       
-    // })
+      if (feature) {
+        if (vectorPointLayer) {
+          map.removeLayer(vectorPointLayer)
+        }
+        vectorPointSource = new VectorSource();
+
+        vectorPointLayer = new VectorLayer({
+          source: vectorPointSource
+        });
+
+        map.addLayer(vectorPointLayer);
+        
+        coordinatesPointsArray.forEach(element => {
+          const point = new Point(element);
+          featurePoint = new Feature({
+            geometry: point,
+          });
+          vectorPointSource.addFeature(featurePoint);
+        })
+
+        const markerStyle = new Style({
+          image: new Icon({
+            src: '/src/marker2.png',
+            anchor: [0.5, 1],
+          })
+        })
+    
+        vectorPointLayer.setStyle(markerStyle)
+      }
+    })
     
     if (tooltip) {
       map.removeOverlay(tooltip)
@@ -125,7 +154,6 @@ const map = new Map({
 });
 
 
-
 const sidebar = document.getElementById('sidebar');
 
 function allroads() {
@@ -152,39 +180,25 @@ function allroads() {
   })
 }
 
-function getazs(road_code) {
-  axios.get(`http://127.0.0.1:8000/api/v1/azs-for/${road_code}/`).then(function (response) {
+
+async function getazs(road_code) {
+  try {
+    const response = await axios.get(`http://127.0.0.1:8000/api/v1/azs-for/${road_code}/`)
     const data = response.data
+    // console.log(data)
+    let coordinatesPointsArray = []
 
-    // if (vectorPointLayer) {
-    //   map.removeLayer(vectorPointLayer);
-    //   vectorPointSource.clear();
-    // }
-    // console.log(road_code)
-    vectorPointSource = new VectorSource();
-
-    vectorPointLayer = new VectorLayer({
-      source: vectorPointSource
-    });
-    
-    map.addLayer(vectorPointLayer);
-    
     data.forEach(element => {
       const inputString = element.coordinates;
       const trimmedString = inputString.slice(1, -1);
-      const coordinatesArray = JSON.parse("[" + trimmedString + "]");
+      const coordinatesArray = JSON.parse("[" + trimmedString + "]")
+      coordinatesPointsArray.push(coordinatesArray);
+    })
 
-      const point = new Point(coordinatesArray);
-      featurePoint = new Feature({
-        geometry: point,
-      });
-      vectorPointSource.addFeature(featurePoint);
-    });
-
-    
-
-  })
+    return coordinatesPointsArray;
+  } catch (error) {
+    console.log("F?", error)
+  }
 }
 
 allroads();
-
