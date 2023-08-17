@@ -13,7 +13,7 @@ html, body {
 }
 
 .sidebar {
-  width: 100px;
+  width: 200px;
   background-color: #f1f1f1;
   overflow-y: auto;
   position: absolute;
@@ -21,4 +21,28 @@ html, body {
   right: 0;
   bottom: 0;
   z-index: 2; /* Поверх карты */
+}
+
+button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 5px;
+  background-color: #f1f1f1;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+}
+
+.buttons-container {
+  padding: 10px;
+}
+
+.tooltip {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  padding: 5px;
+  font-size: 14px;
+  pointer-events: none;
+  display: none;
 }
