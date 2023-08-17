@@ -13,7 +13,7 @@ html, body {
 }
 
 .sidebar {
-  width: 300px;
+  width: 100px;
   background-color: #f1f1f1;
   overflow-y: auto;
   position: absolute;

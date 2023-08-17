@@ -5,5 +5,6 @@ from app.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    path('api/v1/allroads/', get_all_roads)
+    path('api/v1/allroads/', get_all_roads),
+    path('api/v1/road/<int:road_code>/', get_only_one_road),
 ]
